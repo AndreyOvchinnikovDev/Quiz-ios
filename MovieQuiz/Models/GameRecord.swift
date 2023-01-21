@@ -7,12 +7,12 @@
 
 import Foundation
 
-struct GameRecord: Codable {
+struct GameRecord: Codable, Comparable {
     let correct: Int
     let total: Int
     let date: String
     
-    func comparisonRecords(pastResults: GameRecord, newResults: GameRecord) -> Bool {
-        pastResults.correct < newResults.correct
+    static func < (lhs: GameRecord, rhs: GameRecord) -> Bool {
+        lhs.correct < rhs.correct
     }
 }

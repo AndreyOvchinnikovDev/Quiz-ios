@@ -15,6 +15,9 @@ protocol StatisticService {
 }
 
 final class StatisticServiceImplementation: StatisticService {
+    private enum Keys: String {
+        case correct, total, bestGame, gamesCount
+    }
     private let userDefaults = UserDefaults.standard
     
     // MARK: - лучший результат
@@ -26,7 +29,6 @@ final class StatisticServiceImplementation: StatisticService {
             }
             return record
         }
-        
         set {
             guard let data = try? JSONEncoder().encode(newValue) else {
                 print("Невозможно сохранить результат")
@@ -36,50 +38,57 @@ final class StatisticServiceImplementation: StatisticService {
         }
     }
     
-    // MARK: - соотношение всех ответов
-    var totalAccuracy: Double {
-        get {
-            guard let correct = userDefaults.string(forKey: Keys.correct.rawValue) else { return 0 }
-            guard let total = userDefaults.string(forKey: Keys.total.rawValue) else { return 0 }
-            return (Double(correct) ?? 0) / (Double(total) ?? 0) * 100
-        }
-        
-    }
-    
     // MARK: - количество сыгранных раундов
     var gamesCount: Int {
         get {
-            guard let gamesCount = userDefaults.string(forKey: Keys.gamesCount.rawValue) else { return 0 }
-            
-            return Int(gamesCount) ?? 0
+            userDefaults.integer(forKey: Keys.gamesCount.rawValue)
         }
         set {
             userDefaults.set(newValue, forKey: Keys.gamesCount.rawValue)
         }
-        
+    }
+    
+    // MARK: - соотношение всех ответов
+    var totalAccuracy: Double {
+        (correct / total) * 100
+    }
+    
+    // MARK: - количество правильных ответов
+    var correct: Double {
+        get {
+            userDefaults.double(forKey: Keys.correct.rawValue)
+        }
+        set {
+            userDefaults.set(newValue, forKey: Keys.correct.rawValue)
+        }
+    }
+    
+    // MARK: - количество всех вопросов
+    var total: Double {
+        get {
+            userDefaults.double(forKey: Keys.total.rawValue)
+        }
+        set {
+            userDefaults.set(newValue, forKey: Keys.total.rawValue)
+        }
     }
     
     // MARK: - метод сохранения рекорда(если он лучше), и сохранение(добавление) вопросов и правильных ответов
     func store(correct count: Int, total amount: Int) {
         let gameRecordModel = GameRecord(correct: count, total: amount, date: Date().dateTimeString)
         
-        if gameRecordModel.comparisonRecords(pastResults: bestGame, newResults: gameRecordModel) {
+        if gameRecordModel > bestGame {
             bestGame = gameRecordModel
         }
         
+        if gamesCount == 0 {
+            correct = Double(count)
+            total = Double(amount)
+        } else {
+            correct += Double(count)
+            total += Double(amount)
+        }
         
-         let correct = userDefaults.string(forKey: Keys.correct.rawValue) ?? "0"
-            
-            userDefaults.set(count + (Int(correct) ?? 0), forKey: Keys.correct.rawValue)
-       
-         let total = userDefaults.string(forKey: Keys.total.rawValue) ?? "0"
-            
-            userDefaults.set(amount + (Int(total) ?? 0), forKey: Keys.total.rawValue)
-      
-        
-    }
-    
-    private enum Keys: String {
-        case correct, total, bestGame, gamesCount
+        gamesCount += 1
     }
 }

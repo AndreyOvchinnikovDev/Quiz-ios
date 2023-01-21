@@ -5,8 +5,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     @IBOutlet private var imageView: UIImageView!
     @IBOutlet private var textLabel: UILabel!
     @IBOutlet private var counterLabel: UILabel!
-    @IBOutlet var yesButton: UIButton!
-    @IBOutlet var noButton: UIButton!
+    @IBOutlet private var yesButton: UIButton!
+    @IBOutlet private var noButton: UIButton!
     
     
     private let questionsAmount: Int = 10
@@ -23,13 +23,17 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         super.viewDidLoad()
         statisticService = StatisticServiceImplementation()
         
-        alertPresenter = AlertPresenter(viewController: self)
+        alertPresenter = AlertPresenter(delegate: self)
         
         questionFactory = QuestionFactory(delegate: self)
         
         questionFactory?.requestNextQuestion()
-  
     }
+    
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        UIStatusBarStyle.lightContent
+    }
+    
     // MARK: - QuestionFactoryDelegate
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question = question else {
@@ -54,7 +58,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         showAnswerResult(isCorrect: currentQuestion.correctAnswer)
         
     }
-    
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         yesButton.isEnabled = false
@@ -104,8 +107,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         if currentQuestionIndex == questionsAmount - 1 {
                
             statisticService?.store(correct: correctAnswers, total: questionsAmount)
-        
-            statisticService?.gamesCount += 1
             
             let result = AlertModel(
                 title: "Этот раунд окончен!",
