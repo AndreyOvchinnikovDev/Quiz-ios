@@ -47,7 +47,7 @@
                                     </stackView>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="crL-lc-xhC" userLabel="Preview Image">
                                         <rect key="frame" x="0.0" y="43.5" width="374" height="561"/>
-                                        <color key="backgroundColor" name="white"/>
+                                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                                         <constraints>
                                             <constraint firstAttribute="width" secondItem="crL-lc-xhC" secondAttribute="height" multiplier="2:3" id="GUE-UV-tPZ"/>
                                         </constraints>
@@ -60,7 +60,7 @@
                                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Uov-Ku-p3S">
                                         <rect key="frame" x="0.0" y="624.5" width="374" height="89.5"/>
                                         <subviews>
-                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" semanticContentAttribute="spatial" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Рейтнг этого фильма меньше чем 5?" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="aZo-8s-tFm" userLabel="Question Label">
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" semanticContentAttribute="spatial" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="aZo-8s-tFm" userLabel="Question Label">
                                                 <rect key="frame" x="42" y="13" width="290" height="63.5"/>
                                                 <fontDescription key="fontDescription" name="YSDisplay-Bold" family="YS Display" pointSize="23"/>
                                                 <color key="textColor" name="white"/>
@@ -121,8 +121,9 @@
                                     </stackView>
                                 </subviews>
                             </stackView>
-                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="eHN-Al-d7m">
-                                <rect key="frame" x="197" y="438" width="20" height="20"/>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="large" translatesAutoresizingMaskIntoConstraints="NO" id="eHN-Al-d7m">
+                                <rect key="frame" x="188.5" y="429.5" width="37" height="37"/>
+                                <color key="color" name="white"/>
                             </activityIndicatorView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
