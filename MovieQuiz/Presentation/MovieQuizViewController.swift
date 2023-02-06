@@ -27,6 +27,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         
         showLoadingIndicator()
         questionFactory?.loadData()
+        activityIndicator.hidesWhenStopped = true
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -35,6 +36,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     // MARK: - QuestionFactoryDelegate
     func didReceiveNextQuestion(question: QuizQuestion?) {
+        activityIndicator.stopAnimating()
+        self.yesButton.isEnabled = true
+        self.noButton.isEnabled = true
         guard let question = question else {
             return
         }
@@ -48,12 +52,11 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     func didLoadDataFromServer() {
-        activityIndicator.isHidden = true
         questionFactory?.requestNextQuestion()
     }
     
-    func didFailToLoadData(with error: Error) {
-        showNetworkError(message: error.localizedDescription)
+    func didFailToLoadData(with error: String) {
+        showNetworkError(message: error)
     }
     
     
@@ -83,7 +86,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         imageView.image = step.image
         textLabel.text = step.question
         counterLabel.text = step.questionNumber
-        
     }
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
@@ -105,14 +107,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
             guard let self = self else { return }
-            self.yesButton.isEnabled = true
-            self.noButton.isEnabled = true
             self.imageView.layer.borderWidth = 0
             self.showNextQuestionOrResults()
         }
     }
     
     private func showNextQuestionOrResults() {
+        showLoadingIndicator()
         if currentQuestionIndex == questionsAmount - 1 {
                
             statisticService?.store(correct: correctAnswers, total: questionsAmount)
@@ -137,17 +138,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         } else {
             currentQuestionIndex += 1
             questionFactory?.requestNextQuestion()
+          
         }
     }
     
     private func showLoadingIndicator() {
-        activityIndicator.isHidden = false
         activityIndicator.startAnimating()
     }
     
     private func hideLoadingIndicator() {
         activityIndicator.stopAnimating()
-        activityIndicator.isHidden = true
     }
     
     private func showNetworkError(message: String) {

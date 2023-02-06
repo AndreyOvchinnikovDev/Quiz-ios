@@ -9,59 +9,17 @@ import Foundation
 
 class QuestionFactory: QuestionFactoryProtocol {
     
-    //    private let questions: [QuizQuestion] = [
-    //        QuizQuestion(
-    //            image: "The Godfather",
-    //            text: "Рейтинг этого фильма больше чем 6?",
-    //            correctAnswer: true
-    //        ), QuizQuestion(
-    //            image: "The Dark Knight",
-    //            text: "Рейтинг этого фильма больше чем 6?",
-    //            correctAnswer: true
-    //        ), QuizQuestion(
-    //            image: "Kill Bill",
-    //            text: "Рейтинг этого фильма больше чем 6?",
-    //            correctAnswer: true
-    //        ), QuizQuestion(
-    //            image: "The Avengers",
-    //            text: "Рейтинг этого фильма больше чем 6?",
-    //            correctAnswer: true
-    //        ), QuizQuestion(
-    //            image: "Deadpool",
-    //            text: "Рейтинг этого фильма больше чем 6?",
-    //            correctAnswer: true
-    //        ), QuizQuestion(
-    //            image: "The Green Knight",
-    //            text: "Рейтинг этого фильма больше чем 6?",
-    //            correctAnswer: true
-    //        ), QuizQuestion(
-    //            image: "Old",
-    //            text: "Рейтинг этого фильма больше чем 6?",
-    //            correctAnswer: false
-    //        ), QuizQuestion(
-    //            image: "The Ice Age Adventures of Buck Wild",
-    //            text: "Рейтинг этого фильма больше чем 6?",
-    //            correctAnswer: false
-    //        ), QuizQuestion(
-    //            image: "Tesla",
-    //            text: "Рейтинг этого фильма больше чем 6?",
-    //            correctAnswer: false
-    //        ), QuizQuestion(
-    //            image: "Vivarium",
-    //            text: "Рейтинг этого фильма больше чем 6?",
-    //            correctAnswer: false
-    //        )
-    //    ]
     weak var delegate: QuestionFactoryDelegate?
     private let moviesLoader: MoviesLoading
     private var movies: [MostPopularMovie] = []
     private lazy var unusedQuestion = movies
+    private var moviesError: String = ""
     
     init(moviesLoader: MoviesLoading, delegate: QuestionFactoryDelegate) {
         self.moviesLoader = moviesLoader
         self.delegate = delegate
     }
-    
+
     func loadData() {
         moviesLoader.loadMovies { [weak self] result in
             DispatchQueue.main.async {
@@ -69,15 +27,22 @@ class QuestionFactory: QuestionFactoryProtocol {
                 switch result {
                 case .success(let mostPopularMovies):
                     self.movies = mostPopularMovies.items
+                    self.moviesError = mostPopularMovies.errorMessage
                     self.delegate?.didLoadDataFromServer()
                 case .failure(let error):
-                    self.delegate?.didFailToLoadData(with: error)
+                    self.delegate?.didFailToLoadData(with: error.localizedDescription)
                 }
             }
         }
     }
-    
+
     func requestNextQuestion() {
+        if movies.isEmpty {
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.delegate?.didFailToLoadData(with: self.moviesError)
+            }
+        }
         if unusedQuestion.isEmpty {
             unusedQuestion = movies
         }
@@ -87,20 +52,26 @@ class QuestionFactory: QuestionFactoryProtocol {
             
             guard let movie = self.unusedQuestion[safe: index] else { return }
             self.unusedQuestion.remove(at: index)
-           
+            
             var imageData = Data()
             
             do {
                 imageData = try Data(contentsOf: movie.resizedImageURL)
             } catch {
-                print("Failed to load image")
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    self.delegate?.didFailToLoadData(with: "Failed to load image")
+                }
+                return
             }
             
             let rating = Float(movie.rating) ?? 0
-            let randomRating = Array(6...9).randomElement()
-            let text = "Рейтинг этого фильма больше чем \(randomRating ?? 0)?"
-            let correctAnswer = rating  > Float(randomRating ?? 0)
+            let randomRating = Array(7...8).randomElement()
+            let randomOperator = ["больше", "меньше"].randomElement()
+            let text = "Рейтинг этого фильма \(randomOperator ?? "больше") чем \(randomRating ?? 0)?"
             
+            let correctAnswer = randomOperator == "больше" ? rating  > Float(randomRating ?? 0) :
+                                                             rating  < Float(randomRating ?? 0)
             let question = QuizQuestion(image: imageData,
                                         text: text,
                                         correctAnswer: correctAnswer)
