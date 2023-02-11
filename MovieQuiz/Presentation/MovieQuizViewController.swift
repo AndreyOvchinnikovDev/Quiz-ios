@@ -10,9 +10,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     @IBOutlet private var activityIndicator: UIActivityIndicatorView!
     
     private var questionFactory: QuestionFactoryProtocol?
-    private var currentQuestion: QuizQuestion?
-    private var alertPresenter: AlertPresenterProtocol?
-    private var statisticService: StatisticService?
+    var alertPresenter: AlertPresenterProtocol?
     private let presenter = MovieQuizPresenter()
     
     private var correctAnswers: Int = 0
@@ -21,7 +19,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         presenter.viewController = self
-        statisticService = StatisticServiceImplementation()
         alertPresenter = AlertPresenter(delegate: self)
         questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
         
@@ -37,18 +34,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     // MARK: - QuestionFactoryDelegate
     func didReceiveNextQuestion(question: QuizQuestion?) {
         activityIndicator.stopAnimating()
-        self.yesButton.isEnabled = true
-        self.noButton.isEnabled = true
-        guard let question = question else {
-            return
-        }
-        
-        currentQuestion = question
-        let viewModel = presenter.convert(model: question)
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.show(quiz: viewModel)
-        }
+        yesButton.isEnabled = true
+        noButton.isEnabled = true
+        presenter.didReceiveNextQuestion(question: question)
     }
     
     func didLoadDataFromServer() {
@@ -64,9 +52,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         yesButton.isEnabled = false
         noButton.isEnabled = false
-        
-        presenter.currentQuestion = currentQuestion
-        
+  
         presenter.yesButtonClicked()
         
     }
@@ -74,15 +60,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         yesButton.isEnabled = false
         noButton.isEnabled = false
-        
-        presenter.currentQuestion = currentQuestion
-        
+       
         presenter.noButtonClicked()
         
     }
     
     // MARK: - Private methods
-    private func show(quiz step: QuizStepViewModel) {
+    func show(quiz step: QuizStepViewModel) {
         imageView.image = step.image
         textLabel.text = step.question
         counterLabel.text = step.questionNumber
@@ -101,39 +85,42 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
             guard let self = self else { return }
             self.imageView.layer.borderWidth = 0
-            self.showNextQuestionOrResults()
+            self.showLoadingIndicator()
+            self.presenter.correctAnswers = self.correctAnswers
+            self.presenter.questionFactory = self.questionFactory
+            self.presenter.showNextQuestionOrResults()
         }
     }
     
-    private func showNextQuestionOrResults() {
-        showLoadingIndicator()
-            if presenter.isLastQuestion() {
-               
-            statisticService?.store(correct: correctAnswers, total: presenter.questionsAmount)
-            
-            let result = AlertModel(
-                title: "Этот раунд окончен!",
-                message:"""
-                 Ваш результат: \(correctAnswers)/\(presenter.questionsAmount)
-            Количество сыгранных квизов: \(statisticService?.gamesCount ?? 0)
-             Рекорд: \(statisticService?.bestGame.correct ?? 0)/\(presenter.questionsAmount) (\(statisticService?.bestGame.date ?? "Ошибка"))
-              Средняя точность: \(String(format: "%.2f", statisticService?.totalAccuracy ?? 0))%
-           """,
-                buttonText: "Сыграть еще раз",
-                completion: { [weak self] in
-                    guard let self = self else { return }
-                    self.presenter.resetQuestionIndex()
-                    self.correctAnswers = 0
-                    self.questionFactory?.requestNextQuestion()
-                }
-            )
-            alertPresenter?.showAlert(result: result)
-        } else {
-            presenter.switchToNextQuestion()
-            questionFactory?.requestNextQuestion()
-          
-        }
-    }
+//    private func showNextQuestionOrResults() {
+//        showLoadingIndicator()
+//            if presenter.isLastQuestion() {
+//
+//            statisticService?.store(correct: correctAnswers, total: presenter.questionsAmount)
+//
+//            let result = AlertModel(
+//                title: "Этот раунд окончен!",
+//                message:"""
+//                 Ваш результат: \(correctAnswers)/\(presenter.questionsAmount)
+//            Количество сыгранных квизов: \(statisticService?.gamesCount ?? 0)
+//             Рекорд: \(statisticService?.bestGame.correct ?? 0)/\(presenter.questionsAmount) (\(statisticService?.bestGame.date ?? "Ошибка"))
+//              Средняя точность: \(String(format: "%.2f", statisticService?.totalAccuracy ?? 0))%
+//           """,
+//                buttonText: "Сыграть еще раз",
+//                completion: { [weak self] in
+//                    guard let self = self else { return }
+//                    self.presenter.resetQuestionIndex()
+//                    self.correctAnswers = 0
+//                    self.questionFactory?.requestNextQuestion()
+//                }
+//            )
+//            alertPresenter?.showAlert(result: result)
+//        } else {
+//            presenter.switchToNextQuestion()
+//            questionFactory?.requestNextQuestion()
+//
+//        }
+//    }
     
     private func showLoadingIndicator() {
         activityIndicator.startAnimating()
