@@ -17,10 +17,10 @@ class AlertPresenter: AlertPresenterProtocol {
     
     func showAlert(result: AlertModel) {
         let alert = UIAlertController(title: result.title, message: result.message, preferredStyle: .alert)
-        
         let action = UIAlertAction(title: result.buttonText, style: .cancel) {_ in
             result.completion()
         }
+        alert.view.accessibilityIdentifier = "idAlert"
         alert.addAction(action)
         delegate?.present(alert, animated: true)
     }
