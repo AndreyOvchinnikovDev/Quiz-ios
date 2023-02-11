@@ -20,6 +20,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        presenter.viewController = self
         statisticService = StatisticServiceImplementation()
         alertPresenter = AlertPresenter(delegate: self)
         questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
@@ -64,9 +65,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         yesButton.isEnabled = false
         noButton.isEnabled = false
         
-        guard let currentQuestion = currentQuestion else { return }
+        presenter.currentQuestion = currentQuestion
         
-        showAnswerResult(isCorrect: currentQuestion.correctAnswer)
+        presenter.yesButtonClicked()
         
     }
     
@@ -74,9 +75,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         yesButton.isEnabled = false
         noButton.isEnabled = false
         
-        guard let currentQuestion = currentQuestion else { return }
+        presenter.currentQuestion = currentQuestion
         
-        showAnswerResult(isCorrect: !currentQuestion.correctAnswer)
+        presenter.noButtonClicked()
         
     }
     
@@ -87,7 +88,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         counterLabel.text = step.questionNumber
     }
     
-    private func showAnswerResult(isCorrect: Bool) {
+    func showAnswerResult(isCorrect: Bool) {
         if isCorrect {
             correctAnswers += 1
         }
@@ -106,7 +107,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private func showNextQuestionOrResults() {
         showLoadingIndicator()
-//        if currentQuestionIndex == questionsAmount - 1
             if presenter.isLastQuestion() {
                
             statisticService?.store(correct: correctAnswers, total: presenter.questionsAmount)
@@ -129,7 +129,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             )
             alertPresenter?.showAlert(result: result)
         } else {
-//            currentQuestionIndex += 1
             presenter.switchToNextQuestion()
             questionFactory?.requestNextQuestion()
           
