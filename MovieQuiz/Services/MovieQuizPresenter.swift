@@ -6,23 +6,51 @@
 //
 import UIKit
 
-final class MovieQuizPresenter {
-    let questionsAmount: Int = 2
-    var currentQuestion: QuizQuestion?
-    var correctAnswers: Int = 0
-    weak var viewController: MovieQuizViewController?
-    
-    var questionFactory: QuestionFactoryProtocol?
+final class MovieQuizPresenter: QuestionFactoryDelegate {
+    var alertPresenter: AlertPresenterProtocol?
+    private let questionsAmount: Int = 10
+    private var currentQuestion: QuizQuestion?
+    private var correctAnswers: Int = 0
+    private var questionFactory: QuestionFactoryProtocol?
+    private var viewController: MovieQuizViewControllerProtocol?
     private var statisticService: StatisticService?
-    private var alertPresenter: AlertPresenterProtocol?
     private var currentQuestionIndex : Int = 0
     
-    func isLastQuestion() -> Bool {
-        currentQuestionIndex == questionsAmount - 1
+    init(viewController: MovieQuizViewControllerProtocol) {
+        self.viewController = viewController
+        
+        alertPresenter = AlertPresenter(delegate: viewController)
+        statisticService = StatisticServiceImplementation()
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        questionFactory?.loadData()
+        viewController.showLoadingIndicator()
     }
     
-    func resetQuestionIndex() {
-        currentQuestionIndex = 0
+    // MARK: - QuestionFactoryDelegate
+    func didLoadDataFromServer() {
+        viewController?.hideLoadingIndicator()
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: String) {
+        let message = error
+        viewController?.showNetworkError(message: message)
+    }
+    
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else {
+            return
+        }
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.viewController?.show(quiz: viewModel)
+        }
+    }
+    // MARK: - public methods
+    func isLastQuestion() -> Bool {
+        currentQuestionIndex == questionsAmount - 1
     }
     
     func switchToNextQuestion() {
@@ -35,26 +63,16 @@ final class MovieQuizPresenter {
     
     func noButtonClicked() {
         didAnswer(isYes: false)
-        
     }
     
-    func didReceiveNextQuestion(question: QuizQuestion?) {
-        guard let question = question else {
-            return
-        }
-        
-        currentQuestion = question
-        let viewModel = convert(model: question)
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.viewController?.show(quiz: viewModel)
-        }
+    func restartGame() {
+        currentQuestionIndex = 0
+        correctAnswers = 0
+        questionFactory?.requestNextQuestion()
     }
     
     func showNextQuestionOrResults() {
-//        showLoadingIndicator()
             if self.isLastQuestion() {
-            statisticService = StatisticServiceImplementation()
             statisticService?.store(correct: correctAnswers, total: self.questionsAmount)
             
             let result = AlertModel(
@@ -68,16 +86,25 @@ final class MovieQuizPresenter {
                 buttonText: "Сыграть еще раз",
                 completion: { [weak self] in
                     guard let self = self else { return }
-                    self.resetQuestionIndex()
+                    self.restartGame()
                     self.correctAnswers = 0
                     self.questionFactory?.requestNextQuestion()
                 }
             )
-                viewController?.alertPresenter?.showAlert(result: result)
+                alertPresenter?.showAlert(result: result)
         } else {
             self.switchToNextQuestion()
             questionFactory?.requestNextQuestion()
-          
+        }
+    }
+    
+    func showAnswerResult(isCorrect: Bool) {
+        didAnswer(isCorrectAnswer: isCorrect)
+        viewController?.highlightImageBorder(isCorrectAnswer: isCorrect)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            guard let self = self else { return }
+            self.showNextQuestionOrResults()
         }
     }
     
@@ -88,9 +115,16 @@ final class MovieQuizPresenter {
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
     }
     
+    func didAnswer(isCorrectAnswer: Bool) {
+          if isCorrectAnswer {
+              correctAnswers += 1
+          }
+      }
     
+        // MARK: - private methods
     private func didAnswer(isYes: Bool) {
         guard let currentQuestion = currentQuestion else { return }
-        viewController?.showAnswerResult(isCorrect: isYes == currentQuestion.correctAnswer)
+        showAnswerResult(isCorrect: isYes == currentQuestion.correctAnswer)
     }
 }
+
