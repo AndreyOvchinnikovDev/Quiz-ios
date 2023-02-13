@@ -34,7 +34,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     
     func didFailToLoadData(with error: String) {
         let message = error
-        viewController?.showNetworkError(message: message)
+        showNetworkError(message: message)
     }
     
     func didReceiveNextQuestion(question: QuizQuestion?) {
@@ -72,17 +72,17 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     }
     
     func showNextQuestionOrResults() {
-            if self.isLastQuestion() {
+        if self.isLastQuestion() {
             statisticService?.store(correct: correctAnswers, total: self.questionsAmount)
             
             let result = AlertModel(
                 title: "Этот раунд окончен!",
                 message:"""
-                 Ваш результат: \(correctAnswers)/\(self.questionsAmount)
-            Количество сыгранных квизов: \(statisticService?.gamesCount ?? 0)
-             Рекорд: \(statisticService?.bestGame.correct ?? 0)/\(self.questionsAmount) (\(statisticService?.bestGame.date ?? "Ошибка"))
-              Средняя точность: \(String(format: "%.2f", statisticService?.totalAccuracy ?? 0))%
-           """,
+                       Ваш результат: \(correctAnswers)/\(self.questionsAmount)
+                       Количество сыгранных квизов: \(statisticService?.gamesCount ?? 0)
+                       Рекорд: \(statisticService?.bestGame.correct ?? 0)/\(self.questionsAmount) (\(statisticService?.bestGame.date ?? "Ошибка"))
+                       Средняя точность: \(String(format: "%.2f", statisticService?.totalAccuracy ?? 0))%
+                       """,
                 buttonText: "Сыграть еще раз",
                 completion: { [weak self] in
                     guard let self = self else { return }
@@ -91,7 +91,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
                     self.questionFactory?.requestNextQuestion()
                 }
             )
-                alertPresenter?.showAlert(result: result)
+            alertPresenter?.showAlert(result: result)
         } else {
             self.switchToNextQuestion()
             questionFactory?.requestNextQuestion()
@@ -121,6 +121,21 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
           }
       }
     
+    func showNetworkError(message: String) {
+        self.viewController?.hideLoadingIndicator()
+        
+        let model = AlertModel(title: "Ошибка",
+                               message: message,
+                               buttonText: "Попробовать еще раз") { [weak self] in
+            guard let self = self else { return }
+            
+            self.switchToNextQuestion()
+            self.restartGame()
+            self.viewController?.showLoadingIndicator()
+        }
+        
+        alertPresenter?.showAlert(result: model)
+    }
         // MARK: - private methods
     private func didAnswer(isYes: Bool) {
         guard let currentQuestion = currentQuestion else { return }

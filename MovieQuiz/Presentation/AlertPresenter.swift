@@ -9,9 +9,9 @@ import UIKit
 
 class AlertPresenter: AlertPresenterProtocol {
     
-    var delegate: MovieQuizViewControllerProtocol?
+    var delegate: AlertPresentableProtocol?
     
-    init(delegate: MovieQuizViewControllerProtocol) {
+    init(delegate: AlertPresentableProtocol) {
         self.delegate = delegate
     }
     

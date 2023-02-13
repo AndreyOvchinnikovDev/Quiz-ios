@@ -67,22 +67,5 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     func hideLoadingIndicator() {
         activityIndicator.stopAnimating()
     }
-    
-    func showNetworkError(message: String) {
-        hideLoadingIndicator()
-        
-        let model = AlertModel(title: "Ошибка",
-                               message: message,
-                               buttonText: "Попробовать еще раз") { [weak self] in
-            guard let self = self else { return }
-            
-            self.presenter.switchToNextQuestion()
-            self.presenter.restartGame()
-            self.showLoadingIndicator()
-            
-        }
-        
-        presenter.alertPresenter?.showAlert(result: model)
-    }
 }
 

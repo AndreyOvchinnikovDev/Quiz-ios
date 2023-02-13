@@ -92,7 +92,7 @@ class MoviesLoaderTests: XCTestCase {
         let expectation = expectation(description: "Loading expectation")
         
         loader.loadMovies { result in
-            // Then
+        // Then
             switch result {
             case .failure(let error):
                 XCTAssertNotNil(error)

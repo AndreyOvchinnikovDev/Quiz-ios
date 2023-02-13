@@ -12,5 +12,5 @@ protocol MovieQuizViewControllerProtocol: AlertPresentableProtocol {
     func highlightImageBorder(isCorrectAnswer: Bool)
     func showLoadingIndicator()
     func hideLoadingIndicator()
-    func showNetworkError(message: String)
+//    func showNetworkError(message: String)
 }
